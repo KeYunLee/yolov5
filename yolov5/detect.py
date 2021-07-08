@@ -96,10 +96,11 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
     # Run inference
     if device.type != 'cpu':
         model(torch.zeros(1, 3, imgsz, imgsz).to(device).type_as(next(model.parameters())))  # run once
-    framenum = 0    # counting frame num
+    framenum = -1    # counting frame num
     t0 = time.time()
     for path, img, im0s, vid_cap in dataset:
         skipframe = int(vid_cap.get(cv2.CAP_PROP_FPS)) if skipfps == 0 else skipfps
+        framenum += 1
         print('framenum',framenum)
         if framenum%skipframe != 0:
             continue
@@ -204,7 +205,7 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
                             save_path += '.mp4'
                         vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
                     vid_writer[i].write(im0)
-        framenum += 1
+
     if save_txt or save_img:
         s = f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}" if save_txt else ''
         print(f"Results saved to {save_dir}{s}")
