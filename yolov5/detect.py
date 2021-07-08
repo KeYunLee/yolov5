@@ -155,6 +155,8 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
                         c = int(cls)  # integer class
                         label_name = names[c]
                         label_list = ['person'] if persononly else names
+                        print('label_name',label_name)
+                        print('label_list',label_list)
                         if label_name in label_list:
                             detectcountperframe += 1
                             label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
@@ -175,6 +177,7 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
                 if dataset.mode == 'image':
                     cv2.imwrite(save_path, im0)
                 elif dataset.mode == 'video':
+                    print('save image when save_img and video mode')
                     if detectcountperframe >= 2:
                         videotimestamp = vid_cap.get(cv2.CAP_PROP_POS_MSEC)/1000
                         videominute = int(videotimestamp//60)
