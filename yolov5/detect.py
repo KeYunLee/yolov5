@@ -50,7 +50,7 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
         hide_conf=False,  # hide confidences
         half=False,  # use FP16 half-precision inference
         persononly=False,  # only detect person obj
-        detectfps=1, # detect frame per seconds
+        skipfps=1, # detect frame per seconds
         ):
     save_img = not nosave and not source.endswith('.txt')  # save inference images
     webcam = source.isnumeric() or source.endswith('.txt') or source.lower().startswith(
@@ -99,7 +99,7 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
     framenum = 0    # counting frame num
     t0 = time.time()
     for path, img, im0s, vid_cap in dataset:
-        skipframe = int(vid_cap.get(cv2.CAP_PROP_FPS)) if detectfps == 0 else detectfps
+        skipframe = int(vid_cap.get(cv2.CAP_PROP_FPS)) if skipfps == 0 else skipfps
         if framenum%skipframe != 0:
             continue
         img = torch.from_numpy(img).to(device)
