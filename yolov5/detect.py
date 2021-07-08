@@ -178,7 +178,7 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
             if save_img:
                 if dataset.mode == 'image':
                     cv2.imwrite(save_path, im0)
-                elif dataset.mode == 'video':
+                elif dataset.mode == 'video' and persononly:
                     if detectcountperframe >= 2:
                         videotimestamp = vid_cap.get(cv2.CAP_PROP_POS_MSEC)/1000
                         videominute = int(videotimestamp//60)
