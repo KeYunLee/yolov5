@@ -62,7 +62,7 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
     time_csv_path = os.path.join(save_dir, 'time.csv')
     if save_img and not os.path.exists(time_csv_path):
         with open(time_csv_path, 'a') as f:
-            f.write('mins,secs\n')
+            f.write('mins,secs,count\n')
     # Initialize
     set_logging()
     device = select_device(device)
@@ -157,8 +157,8 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
                         c = int(cls)  # integer class
                         label_name = names[c]
                         label_list = ['person'] if persononly else names
-                        print('label_name',label_name)
-                        print('label_list',label_list)
+                        # print('label_name',label_name)
+                        # print('label_list',label_list)
                         if label_name in label_list:
                             detectcountperframe += 1
                             label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
@@ -179,7 +179,6 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
                 if dataset.mode == 'image':
                     cv2.imwrite(save_path, im0)
                 elif dataset.mode == 'video':
-                    print('save image when save_img and video mode')
                     if detectcountperframe >= 2:
                         videotimestamp = vid_cap.get(cv2.CAP_PROP_POS_MSEC)/1000
                         videominute = int(videotimestamp//60)
@@ -187,10 +186,11 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
                         save_img_dir = os.path.join(save_dir,'img')
                         if not os.path.exists(save_img_dir):
                             os.makedirs(save_img_dir)
-                        save_img_path = os.path.join(save_img_dir, str(videominute) + str(videosecs) + '.jpg')
+                        save_img_path = os.path.join(save_img_dir, str(videominute) + '_' + str(videosecs) + '.jpg')
+                        print('count of people is',detectcountperframe,'>=2, save',save_img_path)
                         cv2.imwrite(save_img_path, im0)
                         with open(time_csv_path, 'a') as f:
-                            f.write(str(videominute) + ',' + str(videosecs) + '\n')
+                            f.write(str(videominute) + ',' + str(videosecs) + ',' + str(detectcountperframe) + '\n')
                 else:  # 'video' or 'stream'
                     if vid_path[i] != save_path:  # new video
                         vid_path[i] = save_path
