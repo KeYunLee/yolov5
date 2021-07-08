@@ -99,7 +99,7 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
     framenum = 0    # counting frame num
     t0 = time.time()
     for path, img, im0s, vid_cap in dataset:
-        skipframe = int(vid_cap.get(cv2.CAP_PROP_FPS)) if detectfps == 0 else skipframe = detectfps
+        skipframe = int(vid_cap.get(cv2.CAP_PROP_FPS)) if detectfps == 0 else detectfps
         if framenum%skipframe != 0:
             continue
         img = torch.from_numpy(img).to(device)
