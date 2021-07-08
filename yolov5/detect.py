@@ -8,6 +8,7 @@ import argparse
 import sys
 import time
 from pathlib import Path
+import os
 
 import cv2
 import torch
@@ -48,6 +49,8 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
         hide_labels=False,  # hide labels
         hide_conf=False,  # hide confidences
         half=False,  # use FP16 half-precision inference
+        persononly=False,  # only detect person obj
+        detectfps=1, # detect frame per seconds
         ):
     save_img = not nosave and not source.endswith('.txt')  # save inference images
     webcam = source.isnumeric() or source.endswith('.txt') or source.lower().startswith(
@@ -56,7 +59,10 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
     # Directories
     save_dir = increment_path(Path(project) / name, exist_ok=exist_ok)  # increment run
     (save_dir / 'labels' if save_txt else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
-
+    time_csv_path = os.path.join(save_dir, 'time.csv')
+    if save_img and not os.path.exists(time_csv_path):
+        with open(time_csv_path, 'a') as f:
+            f.write('mins,secs\n')
     # Initialize
     set_logging()
     device = select_device(device)
@@ -90,8 +96,12 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
     # Run inference
     if device.type != 'cpu':
         model(torch.zeros(1, 3, imgsz, imgsz).to(device).type_as(next(model.parameters())))  # run once
+    framenum = 0    # counting frame num
     t0 = time.time()
     for path, img, im0s, vid_cap in dataset:
+        skipframe = int(vid_cap.get(cv2.CAP_PROP_FPS)) if detectfps == 0 else skipframe = detectfps
+        if framenum%skipframe != 0:
+            continue
         img = torch.from_numpy(img).to(device)
         img = img.half() if half else img.float()  # uint8 to fp16/32
         img /= 255.0  # 0 - 255 to 0.0 - 1.0
@@ -123,6 +133,7 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
             s += '%gx%g ' % img.shape[2:]  # print string
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             imc = im0.copy() if save_crop else im0  # for save_crop
+            detectcountperframe = 0 # counting obj after filter
             if len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
@@ -142,10 +153,14 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
 
                     if save_img or save_crop or view_img:  # Add bbox to image
                         c = int(cls)  # integer class
-                        label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
-                        plot_one_box(xyxy, im0, label=label, color=colors(c, True), line_thickness=line_thickness)
-                        if save_crop:
-                            save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
+                        label_name = names[c]
+                        label_list = ['person'] if persononly else names
+                        if label_name in label_list:
+                            detectcountperframe += 1
+                            label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
+                            plot_one_box(xyxy, im0, label=label, color=colors(c, True), line_thickness=line_thickness)
+                            if save_crop:
+                                save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
 
             # Print time (inference + NMS)
             print(f'{s}Done. ({t2 - t1:.3f}s)')
@@ -159,6 +174,18 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
             if save_img:
                 if dataset.mode == 'image':
                     cv2.imwrite(save_path, im0)
+                elif dataset.mode == 'video':
+                    if detectcountperframe >= 2:
+                        videotimestamp = vid_cap.get(cv2.CAP_PROP_POS_MSEC)/1000
+                        videominute = int(videotimestamp//60)
+                        videosecs = round(videotimestamp%60,1)
+                        save_img_dir = os.path.join(save_dir,'img')
+                        if not os.path.exists(save_img_dir):
+                            os.makedirs(save_img_dir)
+                        save_img_path = os.path.join(save_img_dir, str(videominute) + str(videosecs) + '.jpg')
+                        cv2.imwrite(save_img_path, im0)
+                        with open(time_csv_path, 'a') as f:
+                            f.write(str(videominute) + ',' + str(videosecs) + '\n')
                 else:  # 'video' or 'stream'
                     if vid_path[i] != save_path:  # new video
                         vid_path[i] = save_path
@@ -173,7 +200,7 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
                             save_path += '.mp4'
                         vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
                     vid_writer[i].write(im0)
-
+        framenum += 1
     if save_txt or save_img:
         s = f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}" if save_txt else ''
         print(f"Results saved to {save_dir}{s}")
@@ -209,6 +236,8 @@ def parse_opt():
     parser.add_argument('--hide-labels', default=False, action='store_true', help='hide labels')
     parser.add_argument('--hide-conf', default=False, action='store_true', help='hide confidences')
     parser.add_argument('--half', action='store_true', help='use FP16 half-precision inference')
+    parser.add_argument('--persononly', action='store_true', help='only detect person obj')
+    parser.add_argument('--skipfps', type=int, default=1, help='skip frame, 1 is not skip, 2 is skip 1, 0 is skip videofps-1')
     opt = parser.parse_args()
     return opt
 
