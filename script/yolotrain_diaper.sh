@@ -17,4 +17,4 @@ mkdir -p ${WORKDIR}
 mkdir -p ${LOGDIR}
 cd ${WORKDIR}
 
-time python3 -u -m train --img ${IMGSIZE} --batch ${BATCH} --epochs ${EPOCHS} --data ${DATA} --weights ${WEIGHT} &> ${LOGDIR}/yolotrain_`date +%Y%m%d%H%M%S`.log %
+time python3 -u -m train --img ${IMGSIZE} --batch ${BATCH} --epochs ${EPOCHS} --data ${DATA} --weights ${WEIGHT} &> ${LOGDIR}/yolotrain_`date +%Y%m%d%H%M%S`.log &
