@@ -26,7 +26,6 @@ import yaml
 
 from utils.google_utils import gsutil_getsize
 from utils.metrics import box_iou, fitness
-from utils.plots import plot_one_box, colors
 from utils.torch_utils import init_torch_seeds
 
 # Settings
@@ -679,15 +678,6 @@ def increment_path(path, exist_ok=False, sep='', mkdir=False):
     if not dir.exists() and mkdir:
         dir.mkdir(parents=True, exist_ok=True)  # make directory
     return path
-
-
-def readtxtandplot(frame, names, txt_path, height, width):
-    with open(txt_path, 'r') as f:
-        for line in f.readlines():
-            print('box', line.replace('\n', ''))
-            c, xyxy = onerow2xyxy(line, height, width)
-            label = names[c]
-            plot_one_box(xyxy, frame, label=label, color=colors(c + 1, True), line_thickness=3)
 
 
 def onerow2xyxy(line, height, width):

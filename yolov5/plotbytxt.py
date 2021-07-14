@@ -1,7 +1,9 @@
 import argparse
 import cv2
 import os
-from utils.general import readtxtandplot
+
+from utils.general import onerow2xyxy
+from utils.plots import plot_one_box, colors
 
 
 def main(flag):
@@ -65,3 +67,12 @@ if __name__ == "__main__":
     parser.add_argument('--video_code', type=str, default='XVID', help='video_code')
     flag = parser.parse_args()
     main(flag)
+
+
+def readtxtandplot(frame, names, txt_path, height, width):
+    with open(txt_path, 'r') as f:
+        for line in f.readlines():
+            print('box', line.replace('\n', ''))
+            c, xyxy = onerow2xyxy(line, height, width)
+            label = names[c]
+            plot_one_box(xyxy, frame, label=label, color=colors(c + 1, True), line_thickness=3)
