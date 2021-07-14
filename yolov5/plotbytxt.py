@@ -10,7 +10,6 @@ def main(flag):
     txt_dir = flag.txt_dir
     label_path = flag.label_path
     output_path = flag.output_path
-
     # video_path = 'C:\\work\proj\\auocare\output_HDplot\dlink_2c-20210518-115922-1621310362.mp4\dlink_2c-20210518-115922-1621310362.mp4'
     # txt_dir = ''
     # output_path = 'C:\\work\proj\\auocare\output_HDplot\dlink_2c-20210518-115922-1621310362.mp4\dlink_2c-20210518-115922-1621310362_diaper.mp4'
@@ -25,9 +24,12 @@ def main(flag):
 
     video = cv2.VideoCapture(video_path)
     video_name = '.'.join(os.path.basename(video_path).split('.')[:-1])
-    video_height = video.get(cv2.CAP_PROP_FRAME_HEIGHT)
     video_width = video.get(cv2.CAP_PROP_FRAME_WIDTH)
+    video_height = video.get(cv2.CAP_PROP_FRAME_HEIGHT)
     video_fps = video.get(cv2.CAP_PROP_FPS)
+    print('video_name',video_name)
+    print('video_width,video_height',video_width,video_height)
+    print('fps',video_fps)
     output_video = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'mp4v'), video_fps, (video_width, video_height))
 
     frame_num = 0
