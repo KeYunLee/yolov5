@@ -17,7 +17,7 @@ def main(flag):
     label_txt = open(label_path)
     names = []
     for line in label_txt:
-        names.append(line)
+        names.append(line.replace('\n', ''))
     print(names)
     label_txt.close()
     # names = ['diaper']
@@ -44,10 +44,11 @@ def main(flag):
                 for line in f.readlines():
                     print('frame_num',frame_num,'box',line)
                     c, x, y , w, h= line.replace('\n', '').split(' ')
-                    x = int(x*video_width)
-                    w = int(w*video_width)
-                    y = int(y*video_height)
-                    h = int(h*video_height)
+                    c = int(c)
+                    x = int(float(x)*video_width)
+                    w = int(float(w)*video_width)
+                    y = int(float(y)*video_height)
+                    h = int(float(h)*video_height)
                     xywh = (x, y , w, h)
                     xyxy = xywh2xyxy(xywh)
                     label = names[c]
