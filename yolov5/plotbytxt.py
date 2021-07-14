@@ -48,7 +48,7 @@ def main(flag):
         if os.path.exists(txt_path):
             with open(txt_path, 'r') as f:
                 for line in f.readlines():
-                    print('frame_num',frame_num,'box',line)
+                    print('frame_num',frame_num,'box',line.replace('\n', ''))
                     c, x, y , w, h= line.replace('\n', '').split(' ')
                     c = int(c)
                     x = int(float(x)*video_width)
