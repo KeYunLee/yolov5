@@ -11,6 +11,9 @@ def main(flag):
     txt_dir = flag.txt_dir
     label_path = flag.label_path
     output_path = flag.output_path
+    assert os.path.exists(video_path), 'video is not exist'
+    assert os.path.exists(txt_dir), 'txt_dir is not exist'
+    assert os.path.exists(label_path), 'label_txt is not exist'
     # video_path = 'C:\\work\proj\\auocare\output_HDplot\dlink_2c-20210518-115922-1621310362.mp4\dlink_2c-20210518-115922-1621310362.mp4'
     # txt_dir = ''
     # output_path = 'C:\\work\proj\\auocare\output_HDplot\dlink_2c-20210518-115922-1621310362.mp4\dlink_2c-20210518-115922-1621310362_diaper.mp4'
@@ -21,7 +24,6 @@ def main(flag):
         names.append(line.replace('\n', ''))
     print(names)
     label_txt.close()
-    # names = ['diaper']
 
     video = cv2.VideoCapture(video_path)
     video_name = '.'.join(os.path.basename(video_path).split('.')[:-1])
@@ -31,7 +33,10 @@ def main(flag):
     print('video_name',video_name)
     print('video_width,video_height',video_width,video_height)
     print('fps',video_fps)
-    output_video = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'mp4v'), video_fps, (video_width, video_height))
+
+    if not os.path.exists(os.path.dirname(output_path)):
+        os.makedirs(os.path.dirname(output_path))
+    output_video = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'XVID'), video_fps, (video_width, video_height))
 
     frame_num = 0
     while True:
