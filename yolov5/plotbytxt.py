@@ -11,6 +11,7 @@ def main(flag):
     txt_dir = flag.txt_dir
     label_path = flag.label_path
     output_path = flag.output_path
+    video_code = flag.video_code
     assert os.path.exists(video_path), 'video is not exist'
     assert os.path.exists(txt_dir), 'txt_dir is not exist'
     assert os.path.exists(label_path), 'label_txt is not exist'
@@ -36,7 +37,7 @@ def main(flag):
 
     if not os.path.exists(os.path.dirname(output_path)):
         os.makedirs(os.path.dirname(output_path))
-    output_video = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'XVID'), video_fps, (video_width, video_height))
+    output_video = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*video_code), video_fps, (video_width, video_height))
 
     frame_num = 0
     while True:
@@ -74,5 +75,6 @@ if __name__ == "__main__":
     parser.add_argument('--txt_dir', type=str, required=True, help='txt_dir')
     parser.add_argument('--label_path', type=str, required=True, help='label_path')
     parser.add_argument('--output_path', type=str, required=True, help='output_path')
+    parser.add_argument('--video_code', type=str, default='XVID', help='video_code')
     flag = parser.parse_args()
     main(flag)
