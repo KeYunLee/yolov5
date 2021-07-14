@@ -6,6 +6,15 @@ from utils.general import onerow2xyxy
 from utils.plots import plot_one_box, colors
 
 
+def readtxtandplot(frame, names, txt_path, height, width):
+    with open(txt_path, 'r') as f:
+        for line in f.readlines():
+            print('box', line.replace('\n', ''))
+            c, xyxy = onerow2xyxy(line, height, width)
+            label = names[c]
+            plot_one_box(xyxy, frame, label=label, color=colors(c + 1, True), line_thickness=3)
+
+
 def main(flag):
     video_path = flag.video_path
     txt_dir = flag.txt_dir
@@ -31,23 +40,24 @@ def main(flag):
     video_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
     video_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
     video_fps = video.get(cv2.CAP_PROP_FPS)
-    print('video_name',video_name)
-    print('video_width,video_height',video_width,video_height)
-    print('fps',video_fps)
+    print('video_name', video_name)
+    print('video_width,video_height', video_width, video_height)
+    print('fps', video_fps)
 
     if not os.path.exists(os.path.dirname(output_path)):
         os.makedirs(os.path.dirname(output_path))
-    output_video = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*video_code), video_fps, (video_width, video_height))
+    output_video = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*video_code), video_fps,
+                                   (video_width, video_height))
 
     frame_num = 0
     while True:
-        if frame_num%1000==0:
-            print('run',frame_num)
+        if frame_num % 1000 == 0:
+            print('run', frame_num)
         success, frame = video.read()
         if not success:
-            print('end in',frame_num)
+            print('end in', frame_num)
             break
-        txt_path = os.path.join(txt_dir,video_name+'_'+str(frame_num)+'.txt')
+        txt_path = os.path.join(txt_dir, video_name + '_' + str(frame_num) + '.txt')
         if os.path.exists(txt_path):
             readtxtandplot(frame, names, txt_path, video_height, video_width)
         cv2.putText(frame, str(frame_num), (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 1, cv2.LINE_AA)
@@ -64,15 +74,6 @@ if __name__ == "__main__":
     parser.add_argument('--txt_dir', type=str, required=True, help='txt_dir')
     parser.add_argument('--label_path', type=str, required=True, help='label_path')
     parser.add_argument('--output_path', type=str, required=True, help='output_path')
-    parser.add_argument('--video_code', type=str, default='XVID', help='video_code')
+    parser.add_argument('--video_code', type=str, default='mp4v', help='video_code')
     flag = parser.parse_args()
     main(flag)
-
-
-def readtxtandplot(frame, names, txt_path, height, width):
-    with open(txt_path, 'r') as f:
-        for line in f.readlines():
-            print('box', line.replace('\n', ''))
-            c, xyxy = onerow2xyxy(line, height, width)
-            label = names[c]
-            plot_one_box(xyxy, frame, label=label, color=colors(c + 1, True), line_thickness=3)
