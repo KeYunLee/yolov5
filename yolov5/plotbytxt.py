@@ -38,9 +38,9 @@ def main(flag):
         if not success:
             print('end in',frame_num)
             break
-        txt_path = os.path.join(txt_dir,video_name+'_'+str(frame_num))
+        txt_path = os.path.join(txt_dir,video_name+'_'+str(frame_num)+'.txt')
         if os.path.exists(txt_path):
-            with open(txt_path + '.txt', 'r') as f:
+            with open(txt_path, 'r') as f:
                 for line in f.readlines():
                     print('frame_num',frame_num,'box',line)
                     c, x, y , w, h= line.replace('\n', '').split(' ')
