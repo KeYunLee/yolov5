@@ -24,8 +24,8 @@ def main(flag):
 
     video = cv2.VideoCapture(video_path)
     video_name = '.'.join(os.path.basename(video_path).split('.')[:-1])
-    video_width = video.get(cv2.CAP_PROP_FRAME_WIDTH)
-    video_height = video.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    video_width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+    video_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
     video_fps = video.get(cv2.CAP_PROP_FPS)
     print('video_name',video_name)
     print('video_width,video_height',video_width,video_height)
