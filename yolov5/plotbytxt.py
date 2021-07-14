@@ -1,9 +1,7 @@
 import argparse
 import cv2
 import os
-import numpy as np
-from utils.plots import colors, plot_one_box
-from utils.general import xywh2xyxy
+from utils.general import readtxtandplot
 
 
 def main(flag):
@@ -41,27 +39,16 @@ def main(flag):
 
     frame_num = 0
     while True:
+        if frame_num%1000==0:
+            print('run',frame_num)
         success, frame = video.read()
         if not success:
             print('end in',frame_num)
             break
         txt_path = os.path.join(txt_dir,video_name+'_'+str(frame_num)+'.txt')
         if os.path.exists(txt_path):
-            with open(txt_path, 'r') as f:
-                for line in f.readlines():
-                    print('frame_num',frame_num,'box',line.replace('\n', ''))
-                    c, x, y , w, h= line.replace('\n', '').split(' ')
-                    c = int(c)
-                    x = int(float(x)*video_width)
-                    w = int(float(w)*video_width)
-                    y = int(float(y)*video_height)
-                    h = int(float(h)*video_height)
-                    xywh = np.array([x, y , w, h])
-                    xywh = xywh.reshape([1,-1])
-                    xyxy = xywh2xyxy(xywh)
-                    xyxy = xyxy.reshape([-1])
-                    label = names[c]
-                    plot_one_box(xyxy, frame, label=label, color=colors(c+1, True), line_thickness=3)
+            readtxtandplot(frame, names, txt_path, video_height, video_width)
+        cv2.putText(frame, str(frame_num), (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 1, cv2.LINE_AA)
         output_video.write(frame)
         frame_num += 1
 
