@@ -1,6 +1,7 @@
 import argparse
 import cv2
 import os
+import numpy as np
 from utils.plots import colors, plot_one_box
 from utils.general import xywh2xyxy
 
@@ -49,8 +50,10 @@ def main(flag):
                     w = int(float(w)*video_width)
                     y = int(float(y)*video_height)
                     h = int(float(h)*video_height)
-                    xywh = (x, y , w, h)
+                    xywh = np.array([x, y , w, h])
+                    xywh = xywh.reshape([1,-1])
                     xyxy = xywh2xyxy(xywh)
+                    xyxy = xyxy.reshape([-1])
                     label = names[c]
                     plot_one_box(xyxy, frame, label=label, color=colors(c+1, True), line_thickness=3)
         output_video.write(frame)
