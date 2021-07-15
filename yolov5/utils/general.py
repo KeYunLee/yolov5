@@ -680,15 +680,25 @@ def increment_path(path, exist_ok=False, sep='', mkdir=False):
     return path
 
 
-def onerow2xyxy(line, height, width):
+def onerow2xyxy(line, width, height):
     c, x, y, w, h = line.replace('\n', '').split(' ')
     c = int(c)
-    x = int(float(x) * width)
-    w = int(float(w) * width)
-    y = int(float(y) * height)
-    h = int(float(h) * height)
+    x = float(x) * width
+    w = float(w) * width
+    y = float(y) * height
+    h = float(h) * height
     xywh = np.array([x, y, w, h])
     xywh = xywh.reshape([1, -1])
     xyxy = xywh2xyxy(xywh)
     xyxy = xyxy.reshape([-1])
+    xyxy = xyxy.astype('int')
     return c, xyxy
+
+
+def classtxt2classlist(label_path):
+    label_txt = open(label_path)
+    names = []
+    for line in label_txt:
+        names.append(line.replace('\n', ''))
+    label_txt.close()
+    return names

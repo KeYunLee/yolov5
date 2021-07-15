@@ -2,7 +2,7 @@ import argparse
 import cv2
 import os
 
-from utils.general import onerow2xyxy
+from utils.general import onerow2xyxy, classtxt2classlist
 from utils.plots import plot_one_box, colors
 
 
@@ -10,7 +10,7 @@ def readtxtandplot(frame, names, txt_path, height, width):
     with open(txt_path, 'r') as f:
         for line in f.readlines():
             print('box', line.replace('\n', ''))
-            c, xyxy = onerow2xyxy(line, height, width)
+            c, xyxy = onerow2xyxy(line, width, height)
             label = names[c]
             plot_one_box(xyxy, frame, label=label, color=colors(c + 1, True), line_thickness=3)
 
@@ -28,12 +28,8 @@ def main(flag):
     # txt_dir = ''
     # output_path = 'C:\\work\proj\\auocare\output_HDplot\dlink_2c-20210518-115922-1621310362.mp4\dlink_2c-20210518-115922-1621310362_diaper.mp4'
 
-    label_txt = open(label_path)
-    names = []
-    for line in label_txt:
-        names.append(line.replace('\n', ''))
+    names = classtxt2classlist(label_path)
     print(names)
-    label_txt.close()
 
     video = cv2.VideoCapture(video_path)
     video_name = '.'.join(os.path.basename(video_path).split('.')[:-1])
