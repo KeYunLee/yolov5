@@ -1,8 +1,9 @@
 import os
+import numpy as np
 
 
 class posture(object):
-    def __init__(self, diaperworkarea, personworkarea, filterarea=None):
+    def __init__(self, diaperworkarea=None, personworkarea=None, filterarea=None):
         self.diaperworkarea = diaperworkarea
         self.personworkarea = personworkarea
         self.filterarea = filterarea
@@ -10,20 +11,26 @@ class posture(object):
     def getpost(self, activethings):
         if self.filterarea is not None:
             activethings = [thing for thing in activethings if thingisinarea(self.filterarea, thing['xyxy'])]
-        post = {}
+
         persons = [thing for thing in activethings if thing['label'] == 'person']
         diapers = [thing for thing in activethings if thing['label'] == 'diaper']
-        inworkareapersons = [thing for thing in activethings if
-                             thing['label'] == 'person' and thingisinarea(self.personworkarea, thing['xyxy'])]
-        inworkareadiapers = [thing for thing in activethings if
-                             thing['label'] == 'diaper' and thingisinarea(self.diaperworkarea, thing['xyxy'])]
-        inpersonworkareadiapers = [thing for thing in activethings if
-                                   thing['label'] == 'diaper' and thingisinarea(self.personworkarea, thing['xyxy'])]
-        notinworkareapersons = [thing for thing in activethings if
-                                thing['label'] == 'person' and not thingisinarea(self.personworkarea, thing['xyxy'])]
-        notinworkareadiapers = [thing for thing in activethings if
-                                thing['label'] == 'diaper' and not thingisinarea(self.diaperworkarea, thing['xyxy'])]
+        persons_butt = get_zoomobj(persons, scale=0.5)
 
+        if self.personworkarea is not None:
+            inworkareapersons = [thing for thing in persons if thingisinarea(self.personworkarea, thing['xyxy'])]
+            inpersonworkareadiapers = [thing for thing in diapers if thingisinarea(self.personworkarea, thing['xyxy'])]
+            notinworkareapersons = [thing for thing in persons if not thingisinarea(self.personworkarea, thing['xyxy'])]
+        else:
+            inworkareapersons, notinworkareapersons = get_Intersectionobj(persons, persons)
+            inpersonworkareadiapers = []
+
+        if self.diaperworkarea is not None:
+            inworkareadiapers = [thing for thing in diapers if thingisinarea(self.diaperworkarea, thing['xyxy'])]
+            notinworkareadiapers = [thing for thing in diapers if not thingisinarea(self.diaperworkarea, thing['xyxy'])]
+        else:
+            inworkareadiapers, notinworkareadiapers = get_Intersectionobj(diapers, persons_butt)
+
+        post = {}
         post['count_person'] = len(persons)
         post['count_diaper'] = len(diapers)
         post['count_inworkareaperson'] = len(inworkareapersons)
@@ -36,6 +43,29 @@ class posture(object):
         post['count_persontouchdiaperininworkarea'] = getcount_persontouchobj(inworkareapersons,
                                                                               inworkareadiapers)
         return post
+
+
+def get_zoomobj(objs, scale=0.5):
+    zoomobjs = []
+    for obj in objs:
+        obj['xyxy'] = xyxy2zoomxyxy(obj['xyxy'], scale=scale)
+        zoomobjs.append(obj)
+    return zoomobjs
+
+
+def get_Intersectionobj(objs_A, objs_B):
+    inworkareapersons = []
+    notinworkareapersons = []
+    for i, personi in enumerate(objs_A):
+        iinothers = 0
+        for j, personj in enumerate(objs_B):
+            if i != j and thingisinarea(personj['xyxy'], personi['xyxy']):
+                iinothers += 1
+        if iinothers > 0:
+            inworkareapersons.append(personi)
+        else:
+            notinworkareapersons.append(personi)
+    return inworkareapersons, notinworkareapersons
 
 
 def thingisinarea(area, thing_xyxy):
@@ -61,10 +91,20 @@ def checkpointisinbox(workarea, point_x, point_y):
                    workarea[3] else False
 
 
-def xyxy2avexy(thing_xyxy):
-    avex = (thing_xyxy[0] + thing_xyxy[2]) / 2
-    avey = (thing_xyxy[1] + thing_xyxy[3]) / 2
+def xyxy2avexy(xyxy):
+    avex = (xyxy[0] + xyxy[2]) / 2
+    avey = (xyxy[1] + xyxy[3]) / 2
     return avex, avey
+
+
+def xyxy2zoomxyxy(xyxy, scale=1.0):
+    w = xyxy[2] - xyxy[0]
+    h = xyxy[3] - xyxy[1]
+    zoomw = w * scale
+    zoomh = h * scale
+    avex, avey = xyxy2avexy(xyxy)
+    zoomxyxy = np.array([avex - 0.5 * zoomw, avey - 0.5 * zoomh, avex + 0.5 * zoomw, avey + 0.5 * zoomh]).astype('int')
+    return zoomxyxy
 
 
 class action(object):
