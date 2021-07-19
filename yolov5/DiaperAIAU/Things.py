@@ -10,6 +10,7 @@ def readyolov5txt2things(txt_path, names, width, height):
         for line in f.readlines():
             # print('box', line.replace('\n', ''))
             c, xyxy = onerow2xyxy(line, width, height)
+            # print('xyxy',xyxy)
             label = names[c]
             activedetectthing = {'label':label,'xyxy':xyxy}
             activedetectthings.append(activedetectthing)

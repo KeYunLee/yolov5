@@ -22,13 +22,15 @@ class posture(object):
             notinworkareapersons = [thing for thing in persons if not thingisinarea(self.personworkarea, thing['xyxy'])]
         else:
             inworkareapersons, notinworkareapersons = get_Intersectionobj(persons, persons)
+            if len(persons)==1:
+                notinworkareapersons = []
             inpersonworkareadiapers = []
 
         if self.diaperworkarea is not None:
             inworkareadiapers = [thing for thing in diapers if thingisinarea(self.diaperworkarea, thing['xyxy'])]
             notinworkareadiapers = [thing for thing in diapers if not thingisinarea(self.diaperworkarea, thing['xyxy'])]
         else:
-            inworkareadiapers, notinworkareadiapers = get_Intersectionobj(diapers, persons_butt)
+            inworkareadiapers, notinworkareadiapers = get_Intersectionobj(diapers, persons_butt,method='boxandpoint')
 
         post = {}
         post['count_person'] = len(persons)
@@ -38,33 +40,46 @@ class posture(object):
         post['count_inpersonworkareadiapers'] = len(inpersonworkareadiapers)
         post['count_notinworkareaperson'] = len(notinworkareapersons)
         post['count_notinworkareadiaper'] = len(notinworkareadiapers)
-        post['count_persontouchdiapernotinworkarea'] = getcount_persontouchobj(notinworkareapersons,
-                                                                               notinworkareadiapers)
-        post['count_persontouchdiaperininworkarea'] = getcount_persontouchobj(inworkareapersons,
-                                                                              inworkareadiapers)
+        if self.diaperworkarea is not None:
+            post['count_persontouchdiapernotinworkarea'] = getcount_persontouchobj(notinworkareapersons,
+                                                                                   notinworkareadiapers)
+            post['count_persontouchdiaperininworkarea'] = getcount_persontouchobj(inworkareapersons,
+                                                                                  inworkareadiapers)
+        else :
+            post['count_persontouchdiapernotinworkarea'] = getcount_persontouchobj(notinworkareapersons,
+                                                                                   diapers)
+            post['count_persontouchdiaperininworkarea'] = getcount_persontouchobj(inworkareapersons,
+                                                                                  diapers)
         return post
 
 
 def get_zoomobj(objs, scale=0.5):
     zoomobjs = []
     for obj in objs:
-        obj['xyxy'] = xyxy2zoomxyxy(obj['xyxy'], scale=scale)
-        zoomobjs.append(obj)
-    return zoomobjs
+        zoomobj = obj.copy()
+        zoomobj['xyxy'] = xyxy2zoomxyxy(zoomobj['xyxy'], scale=scale)
+        zoomobjs.append(zoomobj)
+    return objs
 
 
-def get_Intersectionobj(objs_A, objs_B):
+def get_Intersectionobj(objs_A, objs_B, method='iou'):
     inworkareapersons = []
     notinworkareapersons = []
-    for i, personi in enumerate(objs_A):
+    AequalB = objs_A==objs_B
+    for i, obj_a in enumerate(objs_A):
         iinothers = 0
-        for j, personj in enumerate(objs_B):
-            if i != j and thingisinarea(personj['xyxy'], personi['xyxy']):
-                iinothers += 1
+        for j, obj_b in enumerate(objs_B):
+            intersection_bool = get_iou(obj_b['xyxy'], obj_a['xyxy']) != 0 if method == 'iou' else thingisinarea(obj_b['xyxy'], obj_a['xyxy'])
+            if AequalB:
+                if i != j and intersection_bool:
+                    iinothers += 1
+            else:
+                if intersection_bool:
+                    iinothers += 1
         if iinothers > 0:
-            inworkareapersons.append(personi)
+            inworkareapersons.append(obj_a)
         else:
-            notinworkareapersons.append(personi)
+            notinworkareapersons.append(obj_a)
     return inworkareapersons, notinworkareapersons
 
 
@@ -81,6 +96,9 @@ def getcount_persontouchobj(persons, objs):
         for obj in objs:
             diaper_xyxy = obj['xyxy']
             avex, avey = xyxy2avexy(diaper_xyxy)
+            # print('avex','avey',avex,avey)
+            # print('person_xyxy',person_xyxy)
+            # print('checkpointisinbox(person_xyxy, avex, avey)',checkpointisinbox(person_xyxy, avex, avey))
             if checkpointisinbox(person_xyxy, avex, avey):
                 count_persontouchobj += 1
     return count_persontouchobj
@@ -105,6 +123,24 @@ def xyxy2zoomxyxy(xyxy, scale=1.0):
     avex, avey = xyxy2avexy(xyxy)
     zoomxyxy = np.array([avex - 0.5 * zoomw, avey - 0.5 * zoomh, avex + 0.5 * zoomw, avey + 0.5 * zoomh]).astype('int')
     return zoomxyxy
+
+
+def get_iou(boxA, boxB):
+    boxA = [int(x) for x in boxA]
+    boxB = [int(x) for x in boxB]
+
+    xA = max(boxA[0], boxB[0])
+    yA = max(boxA[1], boxB[1])
+    xB = min(boxA[2], boxB[2])
+    yB = min(boxA[3], boxB[3])
+
+    interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
+
+    boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1)
+    boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1)
+
+    iou = interArea / float(boxAArea + boxBArea - interArea)
+    return iou
 
 
 class action(object):
@@ -160,22 +196,29 @@ class comboaction(object):
         if self.status == 'waittrigger':
             if action['action_takediapernotinarea']:
                 self.status = 'takediapernotinarea'
+                self.count = 0
             else:
                 self.count += 1
         elif self.status == 'takediapernotinarea':
             if action['action_twopersoninarea']:
                 self.status = 'twopersoninarea'
+                self.count = 0
             else:
                 self.count += 1
         elif self.status == 'twopersoninarea':
             if action['action_diaperinarea']:
                 self.status = 'replacediaper'
+                self.count = 0
             else:
                 self.count += 1
         elif self.status == 'replacediaper':
-            if action['action_takediapernotinarea'] or (
-                    not action['action_diaperinarea'] and not action['action_twopersoninarea']):
+            # if action['action_takediapernotinarea'] or (
+            #         not action['action_diaperinarea'] and not action['action_twopersoninarea']):
+            #     self.status = 'finish'
+            #     self.count = 0
+            if not action['action_diaperinarea'] and not action['action_twopersoninarea']:
                 self.status = 'finish'
+                self.count = 0
             else:
                 self.count += 1
         else:
@@ -186,10 +229,7 @@ class comboaction(object):
             self.status = 'waittrigger'
             self.count = 0
 
-        # if self.status == original_status and self.status != 'waittrigger':
-        #     self.count += 1
-
-        return self.status
+        return self.status,self.count
 
 
 class timer(object):
