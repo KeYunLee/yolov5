@@ -216,7 +216,8 @@ class comboaction(object):
             #         not action['action_diaperinarea'] and not action['action_twopersoninarea']):
             #     self.status = 'finish'
             #     self.count = 0
-            if not action['action_diaperinarea'] and not action['action_twopersoninarea']:
+            # if not action['action_diaperinarea'] and not action['action_twopersoninarea']:
+            if not action['action_diaperinarea']:
                 self.status = 'finish'
                 self.count = 0
             else:
