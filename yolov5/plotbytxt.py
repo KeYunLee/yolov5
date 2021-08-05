@@ -3,6 +3,7 @@ import cv2
 import os
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 from utils.general import onerow2xyxy, classtxt2classlist
 from utils.plots import plot_one_box, colors
@@ -56,9 +57,8 @@ def main(flag):
                                    (video_width, video_height))
 
     frame_num = 0
+    pbar = tqdm()
     while True:
-        if frame_num % 1000 == 0:
-            print('run', frame_num)
         success, frame = video.read()
         if not success:
             print('end in', frame_num)
@@ -74,7 +74,9 @@ def main(flag):
                         cv2.LINE_AA)
         output_video.write(frame)
         frame_num += 1
+        pbar.update(1)
 
+    pbar.close()
     video.release()
     output_video.release()
 
@@ -88,4 +90,5 @@ if __name__ == "__main__":
     parser.add_argument('--video_code', type=str, default='mp4v', help='video_code')
     parser.add_argument('--status_csv', type=str, default='', help='status csv from ai')
     flag = parser.parse_args()
+    print(flag)
     main(flag)
