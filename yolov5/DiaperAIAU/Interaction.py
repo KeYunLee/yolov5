@@ -2,7 +2,7 @@ import os
 import numpy as np
 
 
-class posture(object):
+class PostureWrapper(object):
     def __init__(self, diaperworkarea=None, personworkarea=None, filterarea=None):
         self.diaperworkarea = diaperworkarea
         self.personworkarea = personworkarea
@@ -21,8 +21,8 @@ class posture(object):
             inpersonworkareadiapers = [thing for thing in diapers if thingisinarea(self.personworkarea, thing['xyxy'])]
             notinworkareapersons = [thing for thing in persons if not thingisinarea(self.personworkarea, thing['xyxy'])]
         else:
-            inworkareapersons, notinworkareapersons = get_Intersectionobj(persons, persons)
-            if len(persons)==1:
+            inworkareapersons, notinworkareapersons = get_intersectionobj(persons, persons)
+            if len(persons) == 1:
                 notinworkareapersons = []
             inpersonworkareadiapers = []
 
@@ -30,7 +30,7 @@ class posture(object):
             inworkareadiapers = [thing for thing in diapers if thingisinarea(self.diaperworkarea, thing['xyxy'])]
             notinworkareadiapers = [thing for thing in diapers if not thingisinarea(self.diaperworkarea, thing['xyxy'])]
         else:
-            inworkareadiapers, notinworkareadiapers = get_Intersectionobj(diapers, persons_butt,method='boxandpoint')
+            inworkareadiapers, notinworkareadiapers = get_intersectionobj(diapers, persons_butt, method='boxandpoint')
 
         post = {}
         post['count_person'] = len(persons)
@@ -45,7 +45,7 @@ class posture(object):
                                                                                    notinworkareadiapers)
             post['count_persontouchdiaperininworkarea'] = getcount_persontouchobj(inworkareapersons,
                                                                                   inworkareadiapers)
-        else :
+        else:
             post['count_persontouchdiapernotinworkarea'] = getcount_persontouchobj(notinworkareapersons,
                                                                                    diapers)
             post['count_persontouchdiaperininworkarea'] = getcount_persontouchobj(inworkareapersons,
@@ -62,15 +62,16 @@ def get_zoomobj(objs, scale=0.5):
     return objs
 
 
-def get_Intersectionobj(objs_A, objs_B, method='iou'):
+def get_intersectionobj(objs_a, objs_b, method='iou'):
     inworkareapersons = []
     notinworkareapersons = []
-    AequalB = objs_A==objs_B
-    for i, obj_a in enumerate(objs_A):
+    aequal_b = objs_a == objs_b
+    for i, obj_a in enumerate(objs_a):
         iinothers = 0
-        for j, obj_b in enumerate(objs_B):
-            intersection_bool = get_iou(obj_b['xyxy'], obj_a['xyxy']) != 0 if method == 'iou' else thingisinarea(obj_b['xyxy'], obj_a['xyxy'])
-            if AequalB:
+        for j, obj_b in enumerate(objs_b):
+            intersection_bool = get_iou(obj_b['xyxy'], obj_a['xyxy']) != 0 if method == 'iou' else thingisinarea(
+                obj_b['xyxy'], obj_a['xyxy'])
+            if aequal_b:
                 if i != j and intersection_bool:
                     iinothers += 1
             else:
@@ -105,8 +106,8 @@ def getcount_persontouchobj(persons, objs):
 
 
 def checkpointisinbox(workarea, point_x, point_y):
-    return True if point_x > workarea[0] and point_x < workarea[2] and point_y > workarea[1] and point_y < \
-                   workarea[3] else False
+    return True if point_x > workarea[0] and point_x < workarea[2] and point_y > workarea[1] and point_y < workarea[
+        3] else False
 
 
 def xyxy2avexy(xyxy):
@@ -125,25 +126,25 @@ def xyxy2zoomxyxy(xyxy, scale=1.0):
     return zoomxyxy
 
 
-def get_iou(boxA, boxB):
-    boxA = [int(x) for x in boxA]
-    boxB = [int(x) for x in boxB]
+def get_iou(box_a, box_b):
+    box_a = [int(x) for x in box_a]
+    box_b = [int(x) for x in box_b]
 
-    xA = max(boxA[0], boxB[0])
-    yA = max(boxA[1], boxB[1])
-    xB = min(boxA[2], boxB[2])
-    yB = min(boxA[3], boxB[3])
+    x_a = max(box_a[0], box_b[0])
+    y_a = max(box_a[1], box_b[1])
+    x_b = min(box_a[2], box_b[2])
+    y_b = min(box_a[3], box_b[3])
 
-    interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
+    inter_area = max(0, x_b - x_a + 1) * max(0, y_b - y_a + 1)
 
-    boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1)
-    boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1)
+    box_a_area = (box_a[2] - box_a[0] + 1) * (box_a[3] - box_a[1] + 1)
+    box_b_area = (box_b[2] - box_b[0] + 1) * (box_b[3] - box_b[1] + 1)
 
-    iou = interArea / float(boxAArea + boxBArea - interArea)
+    iou = inter_area / float(box_a_area + box_b_area - inter_area)
     return iou
 
 
-class action(object):
+class ActionWrapper:
     def __init__(self, window, threscount):
         self.window = window
         self.threscount = threscount
@@ -185,7 +186,7 @@ class action(object):
                 'action_diaperinpersonarea': action_diaperinpersonarea}
 
 
-class comboaction(object):
+class ComboactionWrapper(object):
     def __init__(self, patient):
         self.status = 'waittrigger'
         self.patient = patient
@@ -230,12 +231,12 @@ class comboaction(object):
             self.status = 'waittrigger'
             self.count = 0
 
-        return self.status,self.count
+        return self.status, self.count
 
 
-class timer(object):
+class TimerWrapper(object):
     pass
 
 
-class counter(object):
+class CounterWrapper(object):
     pass
